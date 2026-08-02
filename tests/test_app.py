@@ -5,7 +5,7 @@ def test_create_user(client):
     payload = {
         'username': 'caio',
         'email': 'caio@email.com',
-        'password': '123',
+        'password': 'secret',
     }
 
     response = client.post('/users/', json=payload)
@@ -39,7 +39,7 @@ def test_update_user(client):
         json={
             'username': 'alice',
             'email': 'alice@email.com',
-            'password': 'alice123',
+            'password': 'secret',
         },
     )
 
@@ -51,6 +51,19 @@ def test_update_user(client):
     }
 
 
+def test_update_user_not_found(client):
+    response = client.put(
+        '/users/10',
+        json={
+            'username': 'everton',
+            'email': 'everton@email.com',
+            'password': 'secret',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
 def test_delete_user(client):
     response = client.delete('/users/1')
 
@@ -60,3 +73,8 @@ def test_delete_user(client):
         'email': 'alice@email.com',
         'id': 1,
     }
+
+def test_delete_user_not_found(client):
+    response = client.delete('/users/1')
+    
+    assert response.status_code == HTTPStatus.NOT_FOUND
