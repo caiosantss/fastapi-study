@@ -18,7 +18,7 @@ def test_create_user(client):
     }
 
 
-def test_read_users(client):
+def test_get_users(client):
     response = client.get('/users/')
 
     assert response.status_code == HTTPStatus.OK
@@ -31,6 +31,23 @@ def test_read_users(client):
             }
         ]
     }
+
+
+def test_get_user_id(client):
+    response = client.get('/users/1')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+                'username': 'caio',
+                'email': 'caio@email.com',
+                'id': 1
+                }
+
+
+def test_get_user_id_not_found(client):
+    response = client.get('/users/3')
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_update_user(client):
@@ -74,7 +91,8 @@ def test_delete_user(client):
         'id': 1,
     }
 
+
 def test_delete_user_not_found(client):
     response = client.delete('/users/1')
-    
+
     assert response.status_code == HTTPStatus.NOT_FOUND
