@@ -8,3 +8,19 @@ from app.app import app
 @pytest.fixture
 def client():
     return TestClient(app=app)
+
+
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from app.models import table_registry
+
+@pytest.fixture
+def session():
+    engine = create_engine('sqlite:///:memory:')
+    table_registry.metadata.create_all(bind=engine)
+
+    with Session(engine) as session:
+        yield session
+
+    table_registry.metadata.drop_all(bind=engine)
