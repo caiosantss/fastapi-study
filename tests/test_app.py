@@ -38,10 +38,10 @@ def test_get_user_id(client):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-                'username': 'caio',
-                'email': 'caio@email.com',
-                'id': 1
-                }
+        'username': 'caio',
+        'email': 'caio@email.com',
+        'id': 1,
+    }
 
 
 def test_get_user_id_not_found(client):
