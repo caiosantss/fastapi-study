@@ -1,7 +1,10 @@
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import select
 
+from app.database import get_session
+from app.models import User
 from app.schemas import UserDB, UserList, UserPublic, UserSchema
 
 app = FastAPI(title='FastApi Study!')
@@ -9,15 +12,50 @@ database = []
 
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-def create_user(user: UserSchema):
-    user_with_id = UserDB(**user.model_dump(), id=len(database) + 1)
-    database.append(user_with_id)
-    return user_with_id
+def create_user(
+    user: UserSchema,
+    session=Depends(get_session),  # noqa: B008
+):
+
+    db_user: User | None = session.scalar(
+        select(User).where(
+            (User.username == user.username) | (User.email == user.email)
+        )
+    )
+
+    if db_user:
+        if db_user.email == user.email:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT, detail='Email already exists'
+            )
+        elif db_user.username == user.username:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Username already exists',
+            )
+
+    db_user = User(
+        username=user.username, email=user.email, password=user.password
+    )
+    session.add(instance=db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
 
 
 @app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
-def get_users():
-    return {'users': database}
+def get_users(
+    limit = 10,
+    offset = 0,
+    session=Depends(get_session)
+):  # noqa: B008
+    users_db = session.scalars(
+        select(User)
+        .limit(limit)
+        .offset(offset)
+    )
+    return {'users': users_db}
 
 
 @app.get(

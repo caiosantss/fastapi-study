@@ -1,27 +1,38 @@
 from contextlib import contextmanager
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import StaticPool, create_engine, event
 from sqlalchemy.orm import Session
 
 from app.app import app
+from app.database import get_session
 from app.models import table_registry
-
-fuso_br = ZoneInfo('America/Sao_Paulo')
 
 
 # Arrange
 @pytest.fixture
-def client():
-    return TestClient(app=app)
+def client(session):
+    def override_get_session():
+        yield session
+
+    # FastApi, at this client context, change the session dependency that I used in the app.py with Depends(get_session) to the test session here
+    with TestClient(app=app) as client:
+        app.dependency_overrides[get_session] = override_get_session
+        yield client
+
+    # Undo
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def session():
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine(
+        'sqlite:///:memory:',
+        connect_args={'check_same_thread': False},
+        poolclass=StaticPool,
+    )
     table_registry.metadata.create_all(bind=engine)
 
     with Session(engine) as session:
