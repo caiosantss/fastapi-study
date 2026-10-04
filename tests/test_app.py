@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from app.schemas import UserPublic
+
 
 def test_create_user(client):
     payload = {
@@ -18,41 +20,43 @@ def test_create_user(client):
     }
 
 
-def test_get_users(client):
+def test_create_user_conflict(client, user):
+    payload = {
+        'username': f'{user.username}',
+        'email': f'{user.email}',
+        'password': 'secret',
+    }
+    response = client.post('/users/', json=payload)
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username or email already exists'}
+
+
+def test_read_users(client, user):
+    user_schema = UserPublic.model_validate(obj=user).model_dump()
     response = client.get('/users/')
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'users': [user_schema]}
+
+
+def test_read_user_id(client, user):
+    user_schema = UserPublic.model_validate(obj=user).model_dump()
+    response = client.get(f'/users/{user.id}')
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'users': [
-            {
-                'username': 'caio',
-                'email': 'caio@email.com',
-                'id': 1,
-            }
-        ]
-    }
+    assert response.json() == user_schema
 
 
-def test_get_user_id(client):
-    response = client.get('/users/1')
-
-    assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'username': 'caio',
-        'email': 'caio@email.com',
-        'id': 1,
-    }
-
-
-def test_get_user_id_not_found(client):
+def test_read_user_id_not_found(client):
     response = client.get('/users/3')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_update_user(client):
+def test_update_user(client, user):
+
     response = client.put(
-        '/users/1',
+        f'/users/{user.id}',
         json={
             'username': 'alice',
             'email': 'alice@email.com',
@@ -68,6 +72,29 @@ def test_update_user(client):
     }
 
 
+def test_update_user_conflict(client, user):
+    client.post(
+        '/users/',
+        json={
+            'username': 'bob',
+            'email': 'bob@email.com',
+            'password': 'newsecret',
+        },
+    )
+
+    response = client.put(
+        f'/users/{user.id}',
+        json={
+            'username': 'bob',
+            'email': 'alice@email.com',
+            'password': 'newsecret',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {'detail': 'Username or email already exists'}
+
+
 def test_update_user_not_found(client):
     response = client.put(
         '/users/10',
@@ -81,15 +108,11 @@ def test_update_user_not_found(client):
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_delete_user(client):
-    response = client.delete('/users/1')
+def test_delete_user(client, user):
+    response = client.delete(f'/users/{user.id}')
 
     assert response.status_code == HTTPStatus.OK
-    assert response.json() == {
-        'username': 'alice',
-        'email': 'alice@email.com',
-        'id': 1,
-    }
+    assert response.json() == {'message': 'User deleted successfully'}
 
 
 def test_delete_user_not_found(client):

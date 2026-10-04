@@ -31,10 +31,15 @@ extend-exclude = ['migrations']
 [too.ruff.lint]
 preview = true
 select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+ignore = ["B008"]
 
 [tool.ruff.format]
 preview = true
 quote-style = 'single'
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["Depends", "fastapi.Depends", "Query", "fastapi.Query"]
+
 
 [tool.taskipy.tasks]
 lint = 'ruff check'

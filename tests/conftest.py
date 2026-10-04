@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.app import app
 from app.database import get_session
-from app.models import table_registry
+from app.models import User, table_registry
 
 
 # Arrange
@@ -63,3 +63,14 @@ def _mock_db_time(
     yield time
 
     event.remove(model, 'before_insert', fake_time_hook)
+
+
+@pytest.fixture
+def user(session: Session):
+    user = User(email='test@test.com', username='test', password='test')
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
