@@ -1,5 +1,7 @@
 from http import HTTPStatus
 
+from fastapi.testclient import TestClient
+
 from app.schemas import UserPublic
 
 
@@ -119,3 +121,16 @@ def test_delete_user_not_found(client):
     response = client.delete('/users/1')
 
     assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_get_token(client: TestClient, user):
+    response = client.post(
+        '/token',
+        data={'username': user.email, 'password': user.clean_password},
+    )
+
+    token = response.json()
+
+    assert response.status_code == HTTPStatus.OK
+    assert 'access_token' in token.keys()
+    assert token['token_type'] == 'Bearer'

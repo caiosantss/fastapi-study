@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.app import app
 from app.database import get_session
 from app.models import User, table_registry
+from app.security import get_hash
 
 
 # Arrange
@@ -68,10 +69,20 @@ def _mock_db_time(
 
 @pytest.fixture
 def user(session: Session):
-    user = User(email='test@test.com', username='test', password='test')
+
+    password = 'test'
+
+    user = User(
+        email='test@test.com',
+        username='test',
+        password=get_hash(password=password),
+    )
 
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    # Criando um dado em tempo de exec - gambiarra ou monkey patching
+    user.clean_password = password  # type: ignore
 
     return user

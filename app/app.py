@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_session
 from app.models import User
-from app.schemas import Message, UserList, UserPublic, UserSchema
-from app.security import get_hash, verify_hash_password
+from app.schemas import Message, Token, UserList, UserPublic, UserSchema
+from app.security import create_access_token, get_hash, verify_hash_password
 
 app = FastAPI(title='FastApi Study!')
 
@@ -130,7 +130,7 @@ def delete_user(user_id: int, session: Session = Depends(get_session)):
 
 
 # Nomenclaturas seguem o padrão oficial do FastAPI com OAuth2
-@app.post('/token')
+@app.post('/token', response_model=Token)
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
@@ -158,6 +158,7 @@ def login(
             detail='Incorrect email or password',
         )
 
-    # Se passar, criamos token JWT e enviamos o token para o cliente
+    # Gerar token e retornar no padrao definido Token
+    token = create_access_token(data={'sub': db_user.email})
 
-    # retorna 200 ou 201
+    return Token(access_token=token, token_type='Bearer')
