@@ -17,7 +17,8 @@ def client(session):
     def override_get_session():
         yield session
 
-    # FastApi, at this client context, change the session dependency that I used in the app.py with Depends(get_session) to the test session here
+    # change the session dependency in the app.py
+    # Depends(get_session) to the test session here
     with TestClient(app=app) as client:
         app.dependency_overrides[get_session] = override_get_session
         yield client

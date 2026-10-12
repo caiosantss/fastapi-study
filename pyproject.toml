@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.19.2",
     "fastapi[standard]>=0.140.7",
+    "pwdlib[argon2]>=0.3.1",
     "pydantic-settings>=2.14.2",
     "sqlalchemy>=2.0.52",
     "tzdata>=2026.3",
@@ -28,7 +29,7 @@ addopts = '-p no:warnings'
 line-length = 79
 extend-exclude = ['migrations']
 
-[too.ruff.lint]
+[tool.ruff.lint]
 preview = true
 select = ['I', 'F', 'E', 'W', 'PL', 'PT']
 ignore = ["B008"]
